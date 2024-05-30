@@ -1,0 +1,16 @@
+.btn {
+  border: none;
+  padding: 7px 15px;
+  font-size: 18px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.btn-edit {
+  background-color: #e2f413;
+}
+
+.btn-delete {
+  background-color: #fa1717;
+  color: #fff;
+}
