@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 const Renters = () => {
     const [renters, setRenters] = useState([])
 
-    const fetchOwners = async () => {
+    const fetchRenters = async () => {
         try {
             const response = await fetch('http://localhost:4000/allGeneral');
             if (!response.ok) {
@@ -17,8 +17,29 @@ const Renters = () => {
         }
     };
 
+    const handleDelete = async (id) => {
+        try {
+            const response = await fetch('http://localhost:4000/deleteUser/'+id, {
+                method: "DELETE",
+                headers: {
+                    "content-type": "application/json"
+                },
+            });
+            if(!response.ok) {
+                throw new Error('Failed to delete data');
+            }
+            const dataJson = await response.json();
+            // Do something with the data
+            if(dataJson.success){
+                fetchRenters()
+            }
+        } catch(err) {
+            console.error('Error:', err.message);
+        }
+    }
+
     useEffect(() => {
-        fetchOwners();
+        fetchRenters();
     }, [])
 
     return(
@@ -67,7 +88,7 @@ const Renters = () => {
                                                 {renter.role}
                                             </td>
                                             <td className="flex items-center gap-2">
-                                                <button className='btn btn-delete'>Delete</button>
+                                                <button className='btn btn-delete' onClick={() => handleDelete(renter._id)}>Delete</button>
                                             </td>
                                         </tr>
                                     );

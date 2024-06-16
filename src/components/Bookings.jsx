@@ -43,7 +43,7 @@ const Bookings = () => {
                     <tbody>
                         {
                             allBookings && allBookings.length && (
-                                allBookings.map((booking, index) => {
+                                allBookings.map((booking) => {
                                     return(
                                         <tr key={booking._id}>
                                             <td>{booking._id}</td>

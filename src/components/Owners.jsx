@@ -19,6 +19,27 @@ const Owners = () => {
         }
     };
 
+    const handleDelete = async (id) => {
+        try {
+            const response = await fetch('http://localhost:4000/deleteUser/'+id, {
+                method: "DELETE",
+                headers: {
+                    "content-type": "application/json"
+                },
+            });
+            if(!response.ok) {
+                throw new Error('Failed to delete data');
+            }
+            const dataJson = await response.json();
+            // Do something with the data
+            if(dataJson.success){
+                fetchOwners()
+            }
+        } catch(err) {
+            console.error('Error:', err.message);
+        }
+    }
+
     useEffect(() => {
         fetchOwners();
     }, [])
@@ -69,7 +90,7 @@ const Owners = () => {
                                                 {owner.role}
                                             </td>
                                             <td className="flex items-center gap-2">
-                                                <button className='btn btn-delete'>Delete</button>
+                                                <button className='btn btn-delete' onClick={() => handleDelete(owner._id)}>Delete</button>
                                             </td>
                                         </tr>
                                     );

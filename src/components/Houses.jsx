@@ -2,61 +2,77 @@ import { useEffect, useState } from "react";
 import { format } from "date-fns";
 
 const Houses = () => {
+    // state name of owmer
     const [nameOwner, setNameOwner] = useState("");
+    // state house update on website
+    const [filterDate, setFilterDate] = useState("");
     const [houses, setHouses] = useState([]);
     const [owners, setOwners] = useState([]);
     const [filteredHouses, setFilteredHouses] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [loadingHouses, setLoadingHouses] = useState(true);
+    const [loadingOwners, setLoadingOwners] = useState(true);
     const [error, setError] = useState(null);
 
-    const fetchHouses = async () => {
+    const fetchData = async () => {
         try {
-            const response = await fetch('http://localhost:4000/places');
-            if (!response.ok) {
-                throw new Error('Failed to fetch houses');
-            }
-            const data = await response.json();
-            setHouses(data);
-            setFilteredHouses(data);
-        } catch (error) {
-            console.error('Error:', error.message);
-            setError('Failed to fetch houses');
-        } finally {
-            setLoading(false);
-        }
-    };
+            const [housesResponse, ownersResponse] = await Promise.all([
+                fetch('http://localhost:4000/places'),
+                fetch('http://localhost:4000/allAdmin')
+            ]);
 
-    const fetchOwners = async () => {
-        try {
-            const response = await fetch('http://localhost:4000/allAdmin');
-            if (!response.ok) {
-                throw new Error('Failed to fetch owners');
-            }
-            const data = await response.json();
-            setOwners(data);
+            if (!housesResponse.ok) throw new Error('Failed to fetch houses');
+            if (!ownersResponse.ok) throw new Error('Failed to fetch owners');
+
+            const housesData = await housesResponse.json();
+            const ownersData = await ownersResponse.json();
+
+            setHouses(housesData);
+            setFilteredHouses(housesData);
+            setOwners(ownersData);
         } catch (error) {
             console.error('Error:', error.message);
-            setError('Failed to fetch owners');
+            setError('Failed to fetch data');
+        } finally {
+            setLoadingHouses(false);
+            setLoadingOwners(false);
         }
     };
 
     useEffect(() => {
-        fetchOwners();
-        fetchHouses();
+        fetchData();
     }, []);
 
     const handleChange = (e) => {
-        const { value } = e.target;
-        setNameOwner(value);
-        if (value === "") {
-            setFilteredHouses(houses);
-        } else {
-            const ownerHouses = houses.filter((house) => house?.owner?.name === value);
-            setFilteredHouses(ownerHouses);
+        const { name, value } = e.target;
+
+        if (name === "owner_name") {
+            setNameOwner(value);
+        } else if (name === "filter_date") {
+            setFilterDate(value);
         }
+
+        filterHouses(value, name === "owner_name" ? value : nameOwner, name === "filter_date" ? value : filterDate);
     };
 
-    if (loading) {
+    const filterHouses = (value, owner, date) => {
+        let filtered = houses;
+
+        if (owner) {
+            filtered = filtered.filter((house) => house?.owner?.name === owner);
+        }
+
+        if (date) {
+            const selectedDate = new Date(date);
+            filtered = filtered.filter((house) => {
+                const houseDate = new Date(house.createdAt);
+                return houseDate.toDateString() === selectedDate.toDateString();
+            });
+        }
+
+        setFilteredHouses(filtered);
+    };
+
+    if (loadingHouses || loadingOwners) {
         return <div>Loading...</div>;
     }
 
@@ -66,14 +82,19 @@ const Houses = () => {
 
     return (
         <div className='bg-white px-4 pt-3 pb-4 rounded-sm border border-gray-200 flex-1'>
-            <strong className="text-gray-700 font-medium">Owner in Website</strong>{" "}
-            <select name="owner_name" value={nameOwner} onChange={handleChange}>
-                <option value="">All Owners</option>
-                {owners && owners.map((owner) => (
-                    <option key={owner._id} value={owner.name}>{owner.name}</option>
-                ))}
-            </select>
-            <div className="mt-5"></div>
+            <div className="mb-4">
+                <strong className="text-gray-700 font-medium">Owner in Website</strong>{" "}
+                <select name="owner_name" value={nameOwner} onChange={handleChange}>
+                    <option value="">All Owners</option>
+                    {owners && owners.map((owner) => (
+                        <option key={owner._id} value={owner.name}>{owner.name}</option>
+                    ))}
+                </select>
+            </div>
+            <div className="mb-4">
+                <strong className="text-gray-700 font-medium">Filter by Date</strong>{" "}
+                <input type="date" name="filter_date" value={filterDate} onChange={handleChange} />
+            </div>
             <strong className="text-gray-700 font-medium">Houses in Website</strong>
             <div className="mt-3">
                 <table className="w-full text-gray-700 border-x border-gray-200 rounded-sm">
